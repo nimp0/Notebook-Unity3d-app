@@ -26,7 +26,7 @@ public class TextPanel
         rtBorders = go.transform.GetChild(0).GetComponent<RectTransform>().GetChild(1).GetComponent<RectTransform>();
         //textPanel.transform.LocalReset();
 
-        go.transform.localPosition = Vector3.forward * Sizes.BuildingParameters.blockWidth / 2;
+        //go.transform.localPosition = parent.transform.localPosition + parent.transform.localScale/2; //Vector3.forward * Sizes.BuildingParameters.blockWidth / 2;
         go.transform.rotation = Quaternion.LookRotation(parent.transform.forward);
         go.transform.localScale = parent.transform.localScale / 1000;
 

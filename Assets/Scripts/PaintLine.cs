@@ -9,7 +9,7 @@ public class PaintLine
     public LineRenderer lineRenderer;
     
     private Vector3[] pointsVectors;
-    private float[] pointsRadii;
+    public float[] pointsRadii;
     private float boundsRadius;
 
     public Color Color
@@ -24,7 +24,7 @@ public class PaintLine
     {
         get
         {
-            return 0.3f / 100;
+            return 0.3f;
         }
     }
 
@@ -35,13 +35,13 @@ public class PaintLine
 
     public void Create(GameObject parent)
     {
-        go = new GameObject();
+        go = new GameObject("PaintLine(Clone)");
         go.transform.SetParent(parent.transform);
 
         lineRenderer = go.AddComponent<LineRenderer>();
         lineRenderer.positionCount = 0;
         lineRenderer.startColor = lineRenderer.endColor = Color;
-        lineRenderer.startWidth = lineRenderer.endWidth = Width;
+        lineRenderer.startWidth = lineRenderer.endWidth = Width/(parent.transform.localScale.x * 20);
         lineRenderer.material = new Material(Shader.Find("UI/Default"));
         lineRenderer.material.SetFloat("_InvFade", 3);
         lineRenderer.material.SetColor("_TintColor", Color);
@@ -50,8 +50,8 @@ public class PaintLine
         lineRenderer.numCapVertices = 30;
         lineRenderer.alignment = LineAlignment.TransformZ;
         lineRenderer.generateLightingData = false;
-        
-        go.transform.localPosition = Vector3.forward * Sizes.BuildingParameters.blockWidth / 2;
+
+        go.transform.localPosition = parent.transform.localPosition; //Vector3.forward * Sizes.BuildingParameters.blockWidth;
 
         //var g = go.GetComponent<MeshRenderer>()?.gameObject;
         //GameObject.Destroy(g);
@@ -65,9 +65,7 @@ public class PaintLine
     public bool OverlapPoint(Vector3 localPoint)
     {
         Vector3 localBoundsCenter = go.transform.InverseTransformPoint(lineRenderer.bounds.center);
-
-        //Debug.DrawLine(localPoint + transform.position, transform.position);
-        //Debug.DrawLine(localBoundsCenter + transform.position, transform.position);
+        //localPoint = localPoint + Vector3.forward * Sizes.Notebook.offsetFromWall;
 
         if (Vector3.Distance(localPoint, localBoundsCenter) > boundsRadius)
         {
@@ -76,8 +74,8 @@ public class PaintLine
 
         for (int i = 0; i < lineRenderer.positionCount; i++)
         {
-            Debug.DrawLine(localPoint + go.transform.position, lineRenderer.GetPosition(i) + go.transform.position, Color.red);
-            Debug.DrawLine(lineRenderer.GetPosition(i) + go.transform.position, lineRenderer.GetPosition(i) + Vector3.up * pointsRadii[i] + go.transform.position, Color.blue);
+            //Debug.DrawLine(localPoint + go.transform.position, lineRenderer.GetPosition(i) + go.transform.position, Color.red, 10);
+            //Debug.DrawLine(lineRenderer.GetPosition(i) + go.transform.position, lineRenderer.GetPosition(i) + Vector3.up * pointsRadii[i] + go.transform.position, Color.blue, 10);
 
             if (Vector3.Distance(localPoint, lineRenderer.GetPosition(i)) < pointsRadii[i])
             {
@@ -90,7 +88,7 @@ public class PaintLine
 
     public void AddPoint(Vector3 localPoint)
     {
-        localPoint = localPoint + Vector3.forward * Sizes.Notebook.offsetFromWall;
+        //localPoint = localPoint + Vector3.forward * Sizes.Notebook.offsetFromWall;
 
         if (lineRenderer.positionCount == 0)
         {

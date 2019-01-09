@@ -51,11 +51,11 @@ public class NotebookInterface : MonoBehaviour
 
     void Update()
     {
-        for (int i = 0; i < textPanels.Count; i++)
-        {
-            //panels[i].OnAnyChange();
-            textPanels[i].RecalculateCornerPoints(wall);
-        }
+        //for (int i = 0; i < textPanels.Count; i++)
+        //{
+        //    //panels[i].OnAnyChange();
+        //    textPanels[i].RecalculateCornerPoints(wall);
+        //}
 
         ray = camera.ScreenPointToRay(Input.mousePosition);
 
@@ -257,11 +257,17 @@ public class NotebookInterface : MonoBehaviour
 
     void TryErasePaintLine()
     {
-        Vector2 wallRelativePosition = hit.transform.InverseTransformPoint(hit.point);
+        Vector3 wallRelativePosition = wall.transform.InverseTransformPoint(hit.point);
 
         for (int i = 0; i < paintLines.Count; i++)
         {
             PaintLine paintLine = paintLines[i];
+
+            for (int j = 0; j < paintLine.lineRenderer.positionCount; j++)
+            {
+                Debug.DrawLine(wallRelativePosition + paintLine.go.transform.position, paintLine.lineRenderer.GetPosition(j) + paintLine.go.transform.position, Color.red, 10);
+                Debug.DrawLine(paintLine.lineRenderer.GetPosition(j) + paintLine.go.transform.position, paintLine.lineRenderer.GetPosition(j) + Vector3.up * paintLine.pointsRadii[j] + paintLine.go.transform.position, Color.blue, 10);
+            }
 
             if (paintLine.OverlapPoint(wallRelativePosition))
             {
@@ -280,7 +286,7 @@ public class NotebookInterface : MonoBehaviour
         Vector2 wallRelativePosition = hit.transform.InverseTransformPoint(hit.point);
 
         TextPanel builtTextPanel = BuildTextPanel(wallRelativePosition);
-        builtTextPanel.Move(wallRelativePosition);
+        //builtTextPanel.Move(wallRelativePosition);
         /*TextEntity textEntity = Network.CreateText(VandalWall.Id, "Default text");
         textEntity.X = wallRelativePosition.x;
         textEntity.Y = wallRelativePosition.y;
@@ -337,7 +343,7 @@ public class NotebookInterface : MonoBehaviour
         TextPanel newTextPanel = new TextPanel();
         //infoWall.AddTextPanel(newTextPanel);
         newTextPanel.Create(wall);
-        newTextPanel.go.transform.position = localPoint;
+        newTextPanel.go.transform.localPosition = new Vector3(localPoint.x, localPoint.y, localPoint.z - wall.transform.localScale.z/2);
         textPanels.Add(newTextPanel);
 
         return newTextPanel;
