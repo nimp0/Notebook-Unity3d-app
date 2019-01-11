@@ -263,11 +263,11 @@ public class NotebookInterface : MonoBehaviour
         {
             PaintLine paintLine = paintLines[i];
 
-            for (int j = 0; j < paintLine.lineRenderer.positionCount; j++)
-            {
-                Debug.DrawLine(wallRelativePosition + paintLine.go.transform.position, paintLine.lineRenderer.GetPosition(j) + paintLine.go.transform.position, Color.red, 10);
-                Debug.DrawLine(paintLine.lineRenderer.GetPosition(j) + paintLine.go.transform.position, paintLine.lineRenderer.GetPosition(j) + Vector3.up * paintLine.pointsRadii[j] + paintLine.go.transform.position, Color.blue, 10);
-            }
+            //for (int j = 0; j < paintLine.lineRenderer.positionCount; j++)
+            //{
+            //    Debug.DrawLine(wallRelativePosition + paintLine.go.transform.position, paintLine.lineRenderer.GetPosition(j) + paintLine.go.transform.position, Color.red, 10);
+            //    Debug.DrawLine(paintLine.lineRenderer.GetPosition(j) + paintLine.go.transform.position, paintLine.lineRenderer.GetPosition(j) + Vector3.up * paintLine.pointsRadii[j] + paintLine.go.transform.position, Color.blue, 10);
+            //}
 
             if (paintLine.OverlapPoint(wallRelativePosition))
             {
@@ -298,8 +298,6 @@ public class NotebookInterface : MonoBehaviour
         builtTextPanel.inputField.onDeselect.AddListener(delegate { OnTextPanelDeselect(builtTextPanel); });
         builtTextPanel.inputField.onValueChanged.AddListener(delegate { DestroyEmptyTextPanel(builtTextPanel); });
     }
-
-    
 
     void DestroyEmptyTextPanel(TextPanel textPanel)
     {

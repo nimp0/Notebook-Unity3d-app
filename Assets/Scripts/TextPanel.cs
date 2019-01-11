@@ -28,10 +28,21 @@ public class TextPanel
 
         //go.transform.localPosition = parent.transform.localPosition + parent.transform.localScale/2; //Vector3.forward * Sizes.BuildingParameters.blockWidth / 2;
         go.transform.rotation = Quaternion.LookRotation(parent.transform.forward);
-        go.transform.localScale = parent.transform.localScale / 1000;
+        //go.transform.localScale = parent.transform.localScale / 1000;
 
         proxyText = go.GetComponentInChildren<TMP_Text>();
         inputField = go.GetComponentInChildren<TMP_InputField>();
+
+        proxyText.fontSize = inputField.pointSize = parent.transform.localScale.x / 40;
+
+        float topSide = rtBorders.Find("TopSide").GetComponent<RectTransform>().rect.height;
+        topSide = parent.transform.localScale.x / 100;
+
+        float botSide = rtBorders.Find("BottomSide").GetComponent<RectTransform>().rect.height;
+        float rightSide = rtBorders.Find("RightSide").GetComponent<RectTransform>().rect.height;
+        float leftSide = rtBorders.Find("LeftSide").GetComponent<RectTransform>().rect.height;
+
+        botSide = rightSide = leftSide = parent.transform.localScale.x / 400;
 
         inputField.onFocusSelectAll = false;
         boxCollider = proxyText.gameObject.AddComponent<BoxCollider>();
@@ -209,31 +220,3 @@ public class TextPanel
 
 
 
-//public static void BuildContext(ContextInputWindow ciw)
-//{
-//	RectTransform rt = ciw.proxyText.GetComponent<RectTransform>();
-//	rt.pivot = new Vector2(.5f, 1f);
-//	ciw.go.transform.localPosition = -Vector3.up * 50;
-//	TMP_InputField inputField = ciw.inputField;
-//	inputField.textComponent.color = Color.black;
-//	TextAlignmentOptions aligment = TextAlignmentOptions.TopLeft;
-//	TextOverflowModes overflowMode = TextOverflowModes.Overflow;
-
-//	inputField.textComponent.alignment = aligment;
-//	//inputField.textComponent.enableAutoSizing = true;
-//	inputField.textComponent.fontSizeMax = 14;
-//	inputField.textComponent.enableWordWrapping = true;
-//	inputField.textComponent.overflowMode = overflowMode;
-//	inputField.textComponent.fontSize = Sizes.InpuwWindowData.nameFotnSize;
-//	inputField.lineType = TMP_InputField.LineType.MultiLineNewline;
-//	inputField.GetComponent<UnityEngine.UI.Image>().color = Color.white;
-
-//	TMP_Text fakeText = ciw.proxyText;
-//	//fakeText.enableAutoSizing = true;
-//	fakeText.fontSizeMax = 14;
-//	fakeText.alignment = aligment;
-//	fakeText.overflowMode = overflowMode;
-//	fakeText.fontSize = Sizes.InpuwWindowData.nameFotnSize;
-//	fakeText.GetComponent<UnityEngine.UI.ContentSizeFitter>().horizontalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
-//	fakeText.GetComponent<UnityEngine.UI.ContentSizeFitter>().verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
-//}

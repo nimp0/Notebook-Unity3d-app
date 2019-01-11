@@ -9,7 +9,7 @@ public class PaintLine
     public LineRenderer lineRenderer;
     
     private Vector3[] pointsVectors;
-    public float[] pointsRadii;
+    private float[] pointsRadii;
     private float boundsRadius;
 
     public Color Color
