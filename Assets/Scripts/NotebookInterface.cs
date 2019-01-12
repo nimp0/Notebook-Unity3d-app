@@ -2,27 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-enum NotebookIM
-{
-    Drawing,
-    Erasing,
-    Typing,
-    Moving,
-}
-
 enum WindowStage
 {
     Selecting,
     Moving
 }
 
-enum LineBuildingStages
+enum LineBuildingStage
 {
     None,
     InProgress
 }
 
-enum SelectionStates
+enum SelectionStage
 {
     None,
     InProgress
@@ -30,69 +22,51 @@ enum SelectionStates
 
 public class NotebookInterface : MonoBehaviour
 {
-    NotebookIM notebookInputMode = NotebookIM.Drawing;
-    LineBuildingStages lineBuildingStage = LineBuildingStages.None;
-    WindowStage mWfunc = WindowStage.Selecting;
-    SelectionStates selectingStage = SelectionStates.None;
-
     public Canvas canvas;
     public GameObject wall;
     public Camera camera;
 
+    LineBuildingStage lineBuildingStage = LineBuildingStage.None;
+    WindowStage mWfunc = WindowStage.Selecting;
+    SelectionStage selectingStage = SelectionStage.None;
+
     private MovementWindow movementWindow = null;
     private PaintLine drawnPaintLine = null;
-    private TextPanel textPanel;
+    private TextPanel createdTextPanel;
     private List<TextPanel> textPanels = new List<TextPanel>();
     private List<PaintLine> paintLines = new List<PaintLine>();
 
     private RaycastHit hit;
     private Ray ray;
     private bool isTextInputing;
+    private bool canBeHighlighted;
 
     void Update()
     {
-        //for (int i = 0; i < textPanels.Count; i++)
-        //{
-        //    //panels[i].OnAnyChange();
-        //    textPanels[i].RecalculateCornerPoints(wall);
-        //}
+        if (createdTextPanel != null)
+        {
+            Debug.Log(createdTextPanel.inputField.caretPosition);
+            Debug.Log(createdTextPanel.inputField.selectionAnchorPosition);
+        }
 
+        isTextInputing = false;
+        NotebookInput.ChangeMode();
         ray = camera.ScreenPointToRay(Input.mousePosition);
 
-        if (UnityEngine.Input.GetKeyDown(KeyCode.Tab))
+        if (Physics.Raycast(ray, out hit, Sizes.Physics.raycastDistance, LayerMasksList.WallMask))
         {
-            notebookInputMode = NotebookIM.Drawing;
-        }
-
-        else if (UnityEngine.Input.GetKeyDown(KeyCode.LeftControl))
-        {
-            notebookInputMode = NotebookIM.Erasing;
-        }
-
-        else if (UnityEngine.Input.GetKeyDown(KeyCode.LeftShift))
-        {
-            notebookInputMode = NotebookIM.Typing;
-        }
-
-        else if (UnityEngine.Input.GetKeyDown(KeyCode.LeftAlt))
-        {
-            notebookInputMode = NotebookIM.Moving;
-        }
-
-        if (Physics.Raycast(ray, out hit, Sizes.Physics.raycastDistance, Physics.AllLayers))
-        {
-             if (notebookInputMode == NotebookIM.Drawing)
+             if (NotebookInput.notebookInputMode == NotebookMode.Drawing)
              {
                  if (Input.GetMouseButton(0))
                  {
-                     TryDrawLine();
+                     TryDrawing();
                  }
                  else if (Input.GetMouseButtonUp(0))
                  {
                      TryStopDrawing();
                  }
              }
-             else if (notebookInputMode == NotebookIM.Erasing)
+             else if (NotebookInput.notebookInputMode == NotebookMode.Erasing)
              {
                  if (Input.GetMouseButton(0))
                  {
@@ -100,15 +74,27 @@ public class NotebookInterface : MonoBehaviour
                  }
              }
 
-            if (notebookInputMode == NotebookIM.Typing)
+            else if (NotebookInput.notebookInputMode == NotebookMode.Typing)
             {
                 if (Input.GetMouseButtonDown(0))
                 {
                     CreateTextPanel(hit.point);
                 }
+
+                if (createdTextPanel != null)
+                {
+                    if (createdTextPanel.inputField.caretPosition != createdTextPanel.inputField.selectionAnchorPosition)
+                    {
+                        canBeHighlighted = true;
+                        //if (Input.GetKeyDown(KeyCode.Mouse1))
+                        {
+                            TryHighlightText(createdTextPanel);
+                        }
+                    }
+                }
             }
 
-            else if (notebookInputMode == NotebookIM.Moving)
+            else if (NotebookInput.notebookInputMode == NotebookMode.Moving)
             {
                 if (mWfunc == WindowStage.Selecting)
                 {
@@ -143,18 +129,17 @@ public class NotebookInterface : MonoBehaviour
                     }
                 }
             }
-
         }
 
         else
         {
-            if (notebookInputMode == NotebookIM.Drawing)
+            if (NotebookInput.notebookInputMode == NotebookMode.Drawing)
             {
                 TryStopDrawing();
             }
 
 
-            else if (notebookInputMode == NotebookIM.Moving)
+            else if (NotebookInput.notebookInputMode == NotebookMode.Moving)
             {
                 if (mWfunc == WindowStage.Selecting)
                 {
@@ -177,9 +162,9 @@ public class NotebookInterface : MonoBehaviour
 
     void TryStartSelecting(Vector3 localPoint)
     {
-        if (selectingStage == SelectionStates.None)
+        if (selectingStage == SelectionStage.None)
         {
-            selectingStage = SelectionStates.InProgress;
+            selectingStage = SelectionStage.InProgress;
             movementWindow = BuildMovementWindow(localPoint);
         }
     }
@@ -192,7 +177,7 @@ public class NotebookInterface : MonoBehaviour
 
     void TryStopSelecting(Vector3 localPoint)
     {
-        if (selectingStage == SelectionStates.InProgress)
+        if (selectingStage == SelectionStage.InProgress)
         {
             movementWindow.FinalizeSelecting(localPoint, wall.transform);
 
@@ -201,7 +186,7 @@ public class NotebookInterface : MonoBehaviour
                 //movementWindow.DetectForTransformsInMW(lines[i].go.transform, lines[i].recalculatedPointsVectors);
             }
 
-            selectingStage = SelectionStates.None;
+            selectingStage = SelectionStage.None;
             mWfunc = WindowStage.Moving;
         }
     }
@@ -228,25 +213,25 @@ public class NotebookInterface : MonoBehaviour
 
     void TryStartDrawing()
     {
-        if (lineBuildingStage == LineBuildingStages.None)
+        if (lineBuildingStage == LineBuildingStage.None)
         {
-            lineBuildingStage = LineBuildingStages.InProgress;
+            lineBuildingStage = LineBuildingStage.InProgress;
             drawnPaintLine = BuildPaintLine();
         }
     }
 
     void TryStopDrawing()
     {
-        if (lineBuildingStage == LineBuildingStages.InProgress)
+        if (lineBuildingStage == LineBuildingStage.InProgress)
         {
             drawnPaintLine.Finilize();
             //paintLine.RecalculatePointsVectors(wall.transform);
-            lineBuildingStage = LineBuildingStages.None;
+            lineBuildingStage = LineBuildingStage.None;
             drawnPaintLine = null;
         }
     }
 
-    void TryDrawLine()
+    void TryDrawing()
     {
         TryStartDrawing();
         //RaycastHit hit;
@@ -282,21 +267,21 @@ public class NotebookInterface : MonoBehaviour
     {
         /*RaycastHit hit;
         Physics.Raycast(Ray, out hit, Sizes.Physics.raycastDistance, 1 << LayersNameTable.InfoWall);*/
-
         Vector2 wallRelativePosition = hit.transform.InverseTransformPoint(hit.point);
 
-        TextPanel builtTextPanel = BuildTextPanel(wallRelativePosition);
+        createdTextPanel = BuildTextPanel(wallRelativePosition);
         //builtTextPanel.Move(wallRelativePosition);
-        /*TextEntity textEntity = Network.CreateText(VandalWall.Id, "Default text");
-        textEntity.X = wallRelativePosition.x;
-        textEntity.Y = wallRelativePosition.y;
-        Network.UpdateText(textEntity.Id, textEntity);
-        builtTextPanel.TextEntity = textEntity;*/
 
-        builtTextPanel.Focus();
-        builtTextPanel.inputField.onSelect.AddListener(delegate { OnTextPanelSelect(); });
-        builtTextPanel.inputField.onDeselect.AddListener(delegate { OnTextPanelDeselect(builtTextPanel); });
-        builtTextPanel.inputField.onValueChanged.AddListener(delegate { DestroyEmptyTextPanel(builtTextPanel); });
+        //createdTextPanel.Focus();
+        createdTextPanel.inputField.onSelect.AddListener(delegate { OnTextPanelSelect(); });
+        createdTextPanel.inputField.onDeselect.AddListener(delegate { OnTextPanelDeselect(createdTextPanel); DestroyEmptyTextPanel(createdTextPanel); });
+        //activatedTextPanel.inputField.onValueChanged.AddListener(delegate { DestroyEmptyTextPanel(activatedTextPanel); });
+    }
+
+    void TryHighlightText(TextPanel textPanel)
+    {
+        string newText = textPanel.HighlightText(textPanel.inputField.text, textPanel.inputField.selectionAnchorPosition, textPanel.inputField.caretPosition);
+        textPanel.inputField.text = newText;
     }
 
     void DestroyEmptyTextPanel(TextPanel textPanel)
@@ -304,6 +289,7 @@ public class NotebookInterface : MonoBehaviour
         if (textPanel.inputField.text.Length == 0)
         {
             Destroy(textPanel.go);
+            textPanels.Remove(textPanel);
         }
     }
 
@@ -314,7 +300,10 @@ public class NotebookInterface : MonoBehaviour
 
     void OnTextPanelDeselect(TextPanel textPanel)
     {
-        isTextInputing = false;
+        if (!textPanel.inputField.isFocused)
+        {
+            isTextInputing = false;
+        }
     }
 
     MovementWindow BuildMovementWindow(Vector3 localPoint)
