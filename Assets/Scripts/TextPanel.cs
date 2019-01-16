@@ -2,32 +2,33 @@
 using TMPro;
 using System;
 using System.Collections;
+using System.Linq;
+using System.Text;
 
 public class TextPanel
 {
     public GameObject go;
     public TMP_InputField inputField;
 
+    private TMP_FontAsset fontAsset;
     private BoxCollider boxCollider;
     private float targetFontSize;
     private Vector3[] cornerPoints;
     private RectTransform rtBorders;
     private TMP_Text proxyText;
 
-    private string mark = "<mark=#ffff09aa></mark>";
-    private string selectedText = "";
-    private string newText;
-
     public void Create(GameObject parent)
     {
         go = UnityEngine.Object.Instantiate(Resources.Load("TextPanel")) as GameObject;
-        go.transform.SetParent(parent.transform);
-        go.transform.rotation = Quaternion.LookRotation(parent.transform.forward);
-        go.transform.localScale = parent.transform.localScale / 3000;
-
         proxyText = go.GetComponentInChildren<TMP_Text>();
         inputField = go.GetComponentInChildren<TMP_InputField>();
         rtBorders = go.transform.GetChild(0).GetComponent<RectTransform>().GetChild(1).GetComponent<RectTransform>();
+        fontAsset = UnityEngine.Object.Instantiate(Resources.Load("LatinCyrilic UI SDF")) as TMP_FontAsset;
+        inputField.fontAsset = proxyText.font = fontAsset;
+
+        go.transform.SetParent(parent.transform);
+        go.transform.rotation = Quaternion.LookRotation(parent.transform.forward);
+        go.transform.localScale = parent.transform.localScale / 3000;
 
         rtBorders.Find("TopSide").GetComponent<RectTransform>().sizeDelta = new Vector2(0, parent.transform.localScale.y * 25);
         rtBorders.Find("BottomSide").GetComponent<RectTransform>().sizeDelta = new Vector2(0, parent.transform.localScale.y * 5);
@@ -42,8 +43,8 @@ public class TextPanel
 
         boxCollider = go.AddComponent<BoxCollider>();
         inputField.onFocusSelectAll = false;
-        proxyText.characterSpacing = 1;
-        go.layer = LayerMasksList.TextPanelMask;
+        proxyText.characterSpacing = 2;
+        //go.layer = LayerMasksList.TextPanelMask;
         Focus();
         inputField.onValueChanged.AddListener(delegate { OnAnyChange(); });
 
@@ -76,6 +77,7 @@ public class TextPanel
     void UpdateProxyText()
     {
         proxyText.text = inputField.text;
+        TMP_Text text = inputField.transform.GetChild(0).GetChild(2).GetComponent<TMP_Text>();
 
         if (inputField.isFocused)
         {
@@ -89,6 +91,14 @@ public class TextPanel
                 if (inputField.text.Substring(inputField.text.Length - newLine.Length) == newLine)
                 {
                     proxyText.text += newLine;
+                    //text.text += newLine;
+                    text.GetComponent<RectTransform>().localPosition = proxyText.GetComponent<RectTransform>().localPosition;
+                    
+                    //inputField.caretPosition = text.text.Length;
+                    Debug.Log(inputField.text);
+                    Debug.Log(proxyText.text);
+                    Debug.Log(text.text);
+                    //Debug.Log(inputField.caretPosition);
                 }
             }
         }
@@ -96,43 +106,88 @@ public class TextPanel
 
     public string HighlightText(string text, int beginningOfSelection, int endOfSelection)
     {
-        string markedText = "";
-        string halfCleanedText = text.Replace("<mark=#ffff09aa>", "");
-        string cleanedText = halfCleanedText.Replace("</mark>", "");
+        string mark = "<mark=#ffff1055></mark>";
+        string selectedText = "";
+        string cleanedText = text.Replace("<mark=#ffff1055>", "").Replace("</mark>", "");
+        int startIndexOfSelectedCleanText = 0;
 
-        if ((beginningOfSelection == 0 && endOfSelection == text.Length) || (beginningOfSelection == text.Length && endOfSelection == 0))
+        if (endOfSelection > beginningOfSelection)
         {
-            if (endOfSelection > beginningOfSelection)
-            {
-                selectedText = cleanedText.Substring(beginningOfSelection, endOfSelection - beginningOfSelection);
-            }
-
-            else if (endOfSelection < beginningOfSelection)
-            {
-                selectedText = cleanedText.Substring(endOfSelection, beginningOfSelection - endOfSelection);
-            }
-
-            markedText = mark.Insert(16, selectedText);
-
-            /*if (text.Contains(markedText))
-            {
-                markedText = selectedText;
-            }*/
+            selectedText = cleanedText.Substring(beginningOfSelection, endOfSelection - beginningOfSelection);
+            startIndexOfSelectedCleanText = beginningOfSelection;
         }
 
-        else
+        else if (endOfSelection < beginningOfSelection)
         {
-            markedText = text;
+            selectedText = cleanedText.Substring(endOfSelection, beginningOfSelection - endOfSelection);
+            startIndexOfSelectedCleanText = endOfSelection;
         }
 
-        if (text.Length.Equals(markedText.Length) && ((beginningOfSelection == 0 && endOfSelection == cleanedText.Length) || (beginningOfSelection == cleanedText.Length && endOfSelection == 0)))
-        {
-            text = cleanedText;
-            markedText = text;
-        }
+        string markedText = mark.Insert(16, selectedText);
+        int startIndexOfSelectedText = text.IndexOf(selectedText, startIndexOfSelectedCleanText);
+        string highlightedText = text.Remove(startIndexOfSelectedText, selectedText.Length).Insert(startIndexOfSelectedText, markedText);
 
-        return markedText;
+        return highlightedText;
     }
+
+    //public string HighlightText(string text, int beginningOfSelection, int endOfSelection)
+    //{
+    //    string highlightedText = "";
+    //    string markedText = "";
+    //    //string cleanedText = text.Replace("<mark=#ffff1055>", "").Replace("</mark>", "");
+    //    string halfCleanedText = text.Replace("<mark=#ffff1055>", "");
+    //    string cleanedText = halfCleanedText.Replace("</mark>", "");
+    //    int startIndexOfSelectedCleanText = 0;
+    //    string selectedHighlightedText = "";
+    //    int startIndexOfSelectedText = 0;
+    //    int fakeIndex = 0;
+
+    //    if (endOfSelection > beginningOfSelection)
+    //    {
+    //        selectedText = cleanedText.Substring(beginningOfSelection, endOfSelection - beginningOfSelection);
+    //        startIndexOfSelectedCleanText = beginningOfSelection;
+    //        int a = beginningOfSelection;
+    //        int b = endOfSelection;
+    //        string fakeSelectedText = text.Substring(a, b - a);
+    //        fakeIndex = a;
+    //        Debug.Log(fakeSelectedText);
+    //        Debug.Log(fakeIndex);
+
+    //        //if (text.Contains("<mark=#ffff1055>") && text.Contains("</mark>"))
+    //        //{
+    //        //    selectedHighlightedText = text.Substring(beginningOfSelection, (endOfSelection + mark.Length) - beginningOfSelection);
+    //        //}
+    //    }
+
+    //    else if (endOfSelection < beginningOfSelection)
+    //    {
+    //        selectedText = cleanedText.Substring(endOfSelection, beginningOfSelection - endOfSelection);
+    //        startIndexOfSelectedCleanText = endOfSelection;
+
+    //        //if (text.Contains("<mark=#ffff1055>") && text.Contains("</mark>"))
+    //        //{
+    //        //    selectedHighlightedText = text.Substring(endOfSelection, (beginningOfSelection + mark.Length) - endOfSelection);
+    //        //}
+    //    }
+
+    //    markedText = mark.Insert(16, selectedText);
+
+    //    //Debug.Log(selectedHighlightedText);
+
+    //    //if (selectedHighlightedText.Contains("<mark=#ffff1055>") && selectedHighlightedText.Contains("</mark>"))
+    //    //{
+    //    //    markedText = selectedHighlightedText.Replace("<mark=#ffff1055>", "").Replace("</mark>", "");
+    //    //    selectedText = selectedHighlightedText;
+    //    //}
+
+    //    startIndexOfSelectedText = text.IndexOf(selectedText, fakeIndex);
+    //    string s = text.Substring(startIndexOfSelectedText, selectedText.Length);
+
+
+    //    highlightedText = text.Remove(startIndexOfSelectedText, selectedText.Length).Insert(startIndexOfSelectedText, markedText);
+
+    //    return highlightedText;
+    //}
 
     public void SetCaretPosition(TMP_InputField inputField, int caretPos)
     {
@@ -172,15 +227,6 @@ public class TextPanel
     //    cornerPoints[2] = projectedRDCorner;
     //    cornerPoints[3] = projectedRUCorner;
     //}
-
-    public Vector2 ProjectPointOnTransformAxes(Vector3 localPoint, Transform transform)
-    {
-        Vector3 rightAxisVector = Vector3.Project(localPoint, transform.right) + new Vector3(0, 0, localPoint.z / 2);
-        Vector3 upAxisVector = Vector3.Project(localPoint, transform.up) + new Vector3(0, 0, localPoint.z / 2);
-        Vector2 projectedPoint = new Vector2(rightAxisVector.x, upAxisVector.y);
-
-        return projectedPoint;
-    }
 }
 
 

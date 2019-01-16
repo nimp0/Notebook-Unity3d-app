@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class MovementWindow
@@ -7,7 +6,7 @@ public class MovementWindow
     public GameObject go;
 
     private RectTransform rt;
-    private Vector3[] cornerPoints;
+    public Vector3[] cornerPoints;
     private Vector3 pivot;
     private Vector3 previousPivot;
     private List<Transform> selectedTransforms;
@@ -114,8 +113,8 @@ public class MovementWindow
                 y = Vector2.Distance(cornerPoints[3], new Vector3(cornerPoints[3].x, selectedTransforms[i].localPosition.y) + new Vector3(0, selectedTransforms[i].position.y, localPos.z));
             }*/
 
-            Debug.DrawLine(cornerPoints[0], new Vector3(ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).x, ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).y, localPos.z), Color.red, 200);
-            Vector3 a = new Vector3(ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).x, ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).y, localPos.z);
+            Debug.DrawLine(cornerPoints[0], new Vector3(Math.ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).x, Math.ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).y, localPos.z), Color.red, 200);
+            Vector3 a = new Vector3(Math.ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).x, Math.ProjectPointOnTransformAxes(selectedTransforms[i].transform.position, parent).y, localPos.z);
             //x = Vector2.Distance(cornerPoints[0], new Vector2(a.x, cornerPoints[0].y));
             //y = Vector2.Distance(cornerPoints[0], new Vector2(cornerPoints[0].x, a.y));
 
@@ -133,20 +132,12 @@ public class MovementWindow
 
     public void SetPivotByLocalPoint(Vector3 localPoint)
     {
-        Vector3 worldPos = rt.position;
-        //Vector3 localCenter = new Vector3(ProjectPointOnTransformAxes(localPoint, parent).x, ProjectPointOnTransformAxes(localPoint, parent).y, localPoint.z);
-        Vector3 localCenter = localPoint;
-
-        //Debug.DrawLine(cornerPoints[0], prevLP, Color.red, 20);
-
-        if (IsLeftUp(localCenter, cornerPoints[0]) && IsLeftDown(localCenter, cornerPoints[1]) && IsRightDown(localCenter, cornerPoints[2]) && IsRightUp(localCenter, cornerPoints[3]))
+        //if (Math.IsLeftUp(localPoint, cornerPoints[0]) && Math.IsLeftDown(localPoint, cornerPoints[1]) && Math.IsRightDown(localPoint, cornerPoints[2]) && Math.IsRightUp(localPoint, cornerPoints[3]))
         {
             float rectDistanceBetweenCornersOfXSide = Vector2.Distance(cornerPoints[1], cornerPoints[2]);
             float rectDistanceBetweenCornersOfYSide = Vector2.Distance(cornerPoints[0], cornerPoints[1]);
-            //Debug.Log(rectDistanceBetweenCornersOfXSide);
-            //Debug.Log(rectDistanceBetweenCornersOfYSide);
-            float distanceBetweenCornerAndLocalCenterByXSide = Vector2.Distance(cornerPoints[1], new Vector2(localCenter.x, cornerPoints[1].y));
-            float distanceBetweenCornerAndLocalCenterByYSide = Vector2.Distance(cornerPoints[1], new Vector2(cornerPoints[1].x, localCenter.y));
+            float distanceBetweenCornerAndLocalCenterByXSide = Vector2.Distance(cornerPoints[1], new Vector2(localPoint.x, cornerPoints[1].y));
+            float distanceBetweenCornerAndLocalCenterByYSide = Vector2.Distance(cornerPoints[1], new Vector2(cornerPoints[1].x, localPoint.y));
             //Debug.DrawLine(cornerPoints[1], new Vector3(localCenter.x, cornerPoints[1].y) + new Vector3(0,0,localPoint.z), Color.red, 10);
             //Debug.DrawLine(cornerPoints[1], new Vector3(cornerPoints[1].x, localCenter.y) + new Vector3(0, 0, localPoint.z), Color.red, 10);
             float pivotX = distanceBetweenCornerAndLocalCenterByXSide / rectDistanceBetweenCornersOfXSide;
@@ -154,10 +145,7 @@ public class MovementWindow
 
             pivot = new Vector2(pivotX, pivotY);
             rt.pivot = pivot;
-            prevLP = localCenter;
-
-            /*Debug.Log(pivotX);
-            Debug.Log(pivotY);*/
+            prevLP = localPoint;
         }
     }
 
@@ -165,7 +153,7 @@ public class MovementWindow
     {
         for (int i = 0; i < transformPoints.Length; i++)
         {
-            if (IsLeftUp(transformPoints[i], cornerPoints[0]) && IsLeftDown(transformPoints[i], cornerPoints[1]) && IsRightDown(transformPoints[i], cornerPoints[2]) && IsRightUp(transformPoints[i], cornerPoints[3]))
+            if (Math.IsLeftUp(transformPoints[i], cornerPoints[0]) && Math.IsLeftDown(transformPoints[i], cornerPoints[1]) && Math.IsRightDown(transformPoints[i], cornerPoints[2]) && Math.IsRightUp(transformPoints[i], cornerPoints[3]))
             {
                 selectedTransforms.Add(potentialChild);
                 potentialChild.SetParent(go.transform);
@@ -197,10 +185,10 @@ public class MovementWindow
         Vector3 rightDownCorner = new Vector3(c.x, c.y, localPoint.z) + worldPos;
         Vector3 rightUpCorner = new Vector3(d.x, d.y, localPoint.z) + worldPos;
 
-        Vector3 projectedLUCorner = new Vector3(ProjectPointOnTransformAxes(leftUpCorner, parent).x, ProjectPointOnTransformAxes(leftUpCorner, parent).y, localPoint.z);
-        Vector3 projectedLDCorner = new Vector3(ProjectPointOnTransformAxes(leftDownCorner, parent).x, ProjectPointOnTransformAxes(leftDownCorner, parent).y, localPoint.z);
-        Vector3 projectedRDCorner = new Vector3(ProjectPointOnTransformAxes(rightDownCorner, parent).x, ProjectPointOnTransformAxes(rightDownCorner, parent).y, localPoint.z);
-        Vector3 projectedRUCorner = new Vector3(ProjectPointOnTransformAxes(rightUpCorner, parent).x, ProjectPointOnTransformAxes(rightUpCorner, parent).y, localPoint.z);
+        Vector3 projectedLUCorner = new Vector3(Math.ProjectPointOnTransformAxes(leftUpCorner, parent).x, Math.ProjectPointOnTransformAxes(leftUpCorner, parent).y, localPoint.z);
+        Vector3 projectedLDCorner = new Vector3(Math.ProjectPointOnTransformAxes(leftDownCorner, parent).x, Math.ProjectPointOnTransformAxes(leftDownCorner, parent).y, localPoint.z);
+        Vector3 projectedRDCorner = new Vector3(Math.ProjectPointOnTransformAxes(rightDownCorner, parent).x, Math.ProjectPointOnTransformAxes(rightDownCorner, parent).y, localPoint.z);
+        Vector3 projectedRUCorner = new Vector3(Math.ProjectPointOnTransformAxes(rightUpCorner, parent).x, Math.ProjectPointOnTransformAxes(rightUpCorner, parent).y, localPoint.z);
 
         //Debug.DrawLine(projectedLUCorner, projectedLDCorner, Color.red, 20);
         //Debug.DrawLine(projectedLDCorner, projectedRDCorner, Color.red, 20);
@@ -225,7 +213,7 @@ public class MovementWindow
         Debug.Log(localPoint);
         Debug.DrawLine(localCenter, localPoint, Color.red, 10);*/
 
-        if (IsLeftUp(localCenter, localPoint))
+        if (Math.IsLeftUp(localCenter, localPoint))
         {
             //Debug.Log("leftup true");
             pivot = new Vector2(1, 0);
@@ -238,7 +226,7 @@ public class MovementWindow
             rt.sizeDelta = newSize + new Vector3(localCenter.x, -localCenter.y, localCenter.z);
         }
 
-        else if (IsRightUp(localCenter, localPoint))
+        else if (Math.IsRightUp(localCenter, localPoint))
         {
             //Debug.Log("rightup true");
             pivot = new Vector2(0, 0);
@@ -251,7 +239,7 @@ public class MovementWindow
             rt.sizeDelta = newSize - localCenter;
         }
 
-        else if (IsLeftDown(localCenter, localPoint))
+        else if (Math.IsLeftDown(localCenter, localPoint))
         {
             //Debug.Log("leftdown true");
             pivot = new Vector2(1, 1);
@@ -264,7 +252,7 @@ public class MovementWindow
             rt.sizeDelta = newSize + localCenter;
         }
 
-        else if (IsRightDown(localCenter, localPoint))
+        else if (Math.IsRightDown(localCenter, localPoint))
         {
             //Debug.Log("rightdown true");
             pivot = new Vector2(0, 1);
@@ -284,48 +272,4 @@ public class MovementWindow
     {
         localPosition = (Vector3)localPosition + Vector3.forward * (Sizes.BuildingParameters.blockWidth / 2 + Sizes.Notebook.offsetFromWall);
     }
-
-    private bool IsLeftUp(Vector2 A, Vector2 B)
-    {
-        return B.x < A.x && B.y > A.y;
-    }
-
-    private bool IsRightUp(Vector2 A, Vector2 B)
-    {
-        return B.x > A.x && B.y > A.y;
-    }
-
-    private bool IsLeftDown(Vector2 A, Vector2 B)
-    {
-        return B.x < A.x && B.y < A.y;
-    }
-
-    private bool IsRightDown(Vector2 A, Vector2 B)
-    {
-        return B.x > A.x && B.y < A.y;
-    }
-
-    public Vector2 ProjectPointOnTransformAxes(Vector3 localPoint, Transform parent)
-    {
-        Vector3 rightAxisVector = Vector3.Project(localPoint, parent.right) + new Vector3(0, 0, localPoint.z / 2);
-        Vector3 upAxisVector = Vector3.Project(localPoint, parent.up) + new Vector3(0, 0, localPoint.z / 2);
-        Vector2 projectedPoint = new Vector2(rightAxisVector.x, upAxisVector.y);
-
-        return projectedPoint;
-    }
-
-    /*public Vector2[] ProjectPointsOnTransformAxes(Vector3[] localPoints, Transform instance)
-    {
-        Vector2[] localPoints2d = new Vector2[localPoints.Length];
-
-        for (int i = 0; i < localPoints.Length; i++)
-        {
-            Vector3 right = Vector3.Project(localPoints[i], instance.transform.right) + Vector3.forward / 2;
-            Vector3 up = Vector3.Project(localPoints[i], instance.transform.up) + Vector3.forward / 2;
-            Vector2 twoDPoint = new Vector2(right.x, up.y);
-            localPoints2d[i] = twoDPoint;
-        }
-
-        return localPoints2d;
-    }*/
 }

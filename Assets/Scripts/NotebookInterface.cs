@@ -30,67 +30,75 @@ public class NotebookInterface : MonoBehaviour
     WindowStage mWfunc = WindowStage.Selecting;
     SelectionStage selectingStage = SelectionStage.None;
 
-    private MovementWindow movementWindow = null;
+    private MovementWindow activatedMovementWindow = null;
     private PaintLine drawnPaintLine = null;
-    private TextPanel createdTextPanel;
+    private TextPanel activatedTextPanel;
     private List<TextPanel> textPanels = new List<TextPanel>();
     private List<PaintLine> paintLines = new List<PaintLine>();
 
     private RaycastHit hit;
     private Ray ray;
     private bool isTextInputing;
-    private bool canBeHighlighted;
 
     void Update()
     {
-        if (createdTextPanel != null)
+        for (int i = 0; i < textPanels.Count; i++)
         {
-            Debug.Log(createdTextPanel.inputField.caretPosition);
-            Debug.Log(createdTextPanel.inputField.selectionAnchorPosition);
+            textPanels[i].OnAnyChange();
         }
 
         isTextInputing = false;
         NotebookInput.ChangeMode();
         ray = camera.ScreenPointToRay(Input.mousePosition);
 
+        if (Physics.Raycast(ray, out hit, Sizes.Physics.raycastDistance, LayerMasksList.TextPanelMask))
+        {
+            for (int i = 0; i < textPanels.Count; i++)
+            {
+                if (textPanels[i].inputField.caretPosition != textPanels[i].inputField.selectionAnchorPosition)
+                {
+                    if (Input.GetKeyDown(KeyCode.LeftShift))
+                    {
+                        TryHighlightText(textPanels[i]);
+                    }
+                }
+            }
+
+            return;
+        }
+
         if (Physics.Raycast(ray, out hit, Sizes.Physics.raycastDistance, LayerMasksList.WallMask))
         {
-             if (NotebookInput.notebookInputMode == NotebookMode.Drawing)
-             {
-                 if (Input.GetMouseButton(0))
-                 {
-                     TryDrawing();
-                 }
-                 else if (Input.GetMouseButtonUp(0))
-                 {
-                     TryStopDrawing();
-                 }
-             }
-             else if (NotebookInput.notebookInputMode == NotebookMode.Erasing)
-             {
-                 if (Input.GetMouseButton(0))
-                 {
+            if (NotebookInput.notebookInputMode == NotebookMode.Drawing)
+            {
+                DestroyMovementWindow();
+
+                if (Input.GetMouseButton(0))
+                {
+                    TryDrawing();
+                }
+                else if (Input.GetMouseButtonUp(0))
+                {
+                    TryStopDrawing();
+                }
+            }
+            else if (NotebookInput.notebookInputMode == NotebookMode.Erasing)
+            {
+                DestroyMovementWindow();
+
+                if (Input.GetMouseButton(0))
+                {
                     TryErasePaintLine();
-                 }
-             }
+                }
+            }
 
             else if (NotebookInput.notebookInputMode == NotebookMode.Typing)
             {
+                DestroyMovementWindow();
+
                 if (Input.GetMouseButtonDown(0))
                 {
                     CreateTextPanel(hit.point);
-                }
-
-                if (createdTextPanel != null)
-                {
-                    if (createdTextPanel.inputField.caretPosition != createdTextPanel.inputField.selectionAnchorPosition)
-                    {
-                        canBeHighlighted = true;
-                        //if (Input.GetKeyDown(KeyCode.Mouse1))
-                        {
-                            TryHighlightText(createdTextPanel);
-                        }
-                    }
                 }
             }
 
@@ -135,81 +143,37 @@ public class NotebookInterface : MonoBehaviour
         {
             if (NotebookInput.notebookInputMode == NotebookMode.Drawing)
             {
+                DestroyMovementWindow();
                 TryStopDrawing();
             }
 
-
             else if (NotebookInput.notebookInputMode == NotebookMode.Moving)
             {
-                if (mWfunc == WindowStage.Selecting)
+                if (Input.GetMouseButton(0))
                 {
-                    if (Input.GetMouseButtonUp(0))
-                    {
-                        TryStopSelecting(hit.point);
-                    }
+                    DestroyMovementWindow();
                 }
 
-                else if (mWfunc == WindowStage.Moving)
-                {
-                    if (Input.GetMouseButtonUp(0))
-                    {
-                        TryStopMoving();
-                    }
-                }
+                //if (mWfunc == WindowStage.Selecting)
+                //{
+                //    if (Input.GetMouseButtonUp(0))
+                //    {
+                //        TryStopSelecting(hit.point);
+                //    }
+                //}
+
+                //else if (mWfunc == WindowStage.Moving)
+                //{
+                //    if (Input.GetMouseButtonUp(0))
+                //    {
+                //        TryStopMoving();
+                //    }
+                //}
             }
         }
     }
 
-    void TryStartSelecting(Vector3 localPoint)
-    {
-        if (selectingStage == SelectionStage.None)
-        {
-            selectingStage = SelectionStage.InProgress;
-            movementWindow = BuildMovementWindow(localPoint);
-        }
-    }
-
-    void TrySelecting(Vector3 localPoint)
-    {
-        TryStartSelecting(localPoint);
-        movementWindow.RecalculateWindowSizeByLocalPoint(localPoint);
-    }
-
-    void TryStopSelecting(Vector3 localPoint)
-    {
-        if (selectingStage == SelectionStage.InProgress)
-        {
-            movementWindow.FinalizeSelecting(localPoint, wall.transform);
-
-            for (int i = 0; i < paintLines.Count; i++)
-            {
-                //movementWindow.DetectForTransformsInMW(lines[i].go.transform, lines[i].recalculatedPointsVectors);
-            }
-
-            selectingStage = SelectionStage.None;
-            mWfunc = WindowStage.Moving;
-        }
-    }
-
-    void TryStartMoving(Vector3 localPoint)
-    {
-        movementWindow.SetPivotByLocalPoint(localPoint);
-        //movementWindow.ChangeLocalPositionOfTransformChildsRelativelyPivot(wall.transform, localPoint);
-    }
-
-    void TryMoving(Vector3 localPoint)
-    {
-        //TryStartMoving(localPoint);
-        movementWindow.MoveWindowByPoint(localPoint);
-    }
-
-    void TryStopMoving()
-    {
-        movementWindow.ChangeTransformParentBySelectedTransforms(wall.transform);
-        Destroy(movementWindow.go);
-        movementWindow = null;
-        mWfunc = WindowStage.Selecting;
-    }
+    #region Drawing
 
     void TryStartDrawing()
     {
@@ -240,6 +204,10 @@ public class NotebookInterface : MonoBehaviour
         drawnPaintLine.AddPoint(wallRelativePosition);
     }
 
+    #endregion
+
+    #region Erasing
+
     void TryErasePaintLine()
     {
         Vector3 wallRelativePosition = wall.transform.InverseTransformPoint(hit.point);
@@ -263,18 +231,22 @@ public class NotebookInterface : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Typing
+
     void CreateTextPanel(Vector3 localPoint)
     {
         /*RaycastHit hit;
         Physics.Raycast(Ray, out hit, Sizes.Physics.raycastDistance, 1 << LayersNameTable.InfoWall);*/
         Vector2 wallRelativePosition = hit.transform.InverseTransformPoint(hit.point);
 
-        createdTextPanel = BuildTextPanel(wallRelativePosition);
+        activatedTextPanel = BuildTextPanel(wallRelativePosition);
         //builtTextPanel.Move(wallRelativePosition);
 
         //createdTextPanel.Focus();
-        createdTextPanel.inputField.onSelect.AddListener(delegate { OnTextPanelSelect(); });
-        createdTextPanel.inputField.onDeselect.AddListener(delegate { OnTextPanelDeselect(createdTextPanel); DestroyEmptyTextPanel(createdTextPanel); });
+        activatedTextPanel.inputField.onSelect.AddListener(delegate { OnTextPanelSelect(); });
+        activatedTextPanel.inputField.onDeselect.AddListener(delegate { OnTextPanelDeselect(activatedTextPanel); DestroyEmptyTextPanel(activatedTextPanel); });
         //activatedTextPanel.inputField.onValueChanged.AddListener(delegate { DestroyEmptyTextPanel(activatedTextPanel); });
     }
 
@@ -306,12 +278,92 @@ public class NotebookInterface : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Moving
+
+    void TryStartSelecting(Vector3 localPoint)
+    {
+        if (selectingStage == SelectionStage.None)
+        {
+            selectingStage = SelectionStage.InProgress;
+            activatedMovementWindow = BuildMovementWindow(localPoint);
+        }
+    }
+
+    void TrySelecting(Vector3 localPoint)
+    {
+        TryStartSelecting(localPoint);
+        activatedMovementWindow.RecalculateWindowSizeByLocalPoint(localPoint);
+    }
+
+    void TryStopSelecting(Vector3 localPoint)
+    {
+        if (selectingStage == SelectionStage.InProgress)
+        {
+            activatedMovementWindow.FinalizeSelecting(localPoint, wall.transform);
+
+            for (int i = 0; i < paintLines.Count; i++)
+            {
+                //movementWindow.DetectForTransformsInMW(lines[i].go.transform, lines[i].recalculatedPointsVectors);
+            }
+
+            selectingStage = SelectionStage.None;
+            mWfunc = WindowStage.Moving;
+        }
+    }
+
+    void TryStartMoving(Vector3 localPoint)
+    {
+        if (Math.IsLeftUp(localPoint, activatedMovementWindow.cornerPoints[0]) && Math.IsLeftDown(localPoint, activatedMovementWindow.cornerPoints[1]) && Math.IsRightDown(localPoint, activatedMovementWindow.cornerPoints[2]) && Math.IsRightUp(localPoint, activatedMovementWindow.cornerPoints[3]))
+        {
+            activatedMovementWindow.SetPivotByLocalPoint(localPoint);
+        }
+
+        else
+        {
+            DestroyMovementWindow();
+        }
+
+        //movementWindow.ChangeLocalPositionOfTransformChildsRelativelyPivot(wall.transform, localPoint);
+    }
+
+    void TryMoving(Vector3 localPoint)
+    {
+        //TryStartMoving(localPoint);
+        if (activatedMovementWindow != null)
+        {
+            activatedMovementWindow.MoveWindowByPoint(localPoint);
+        }
+    }
+
+    void TryStopMoving()
+    {
+        activatedMovementWindow.ChangeTransformParentBySelectedTransforms(wall.transform);
+        DestroyMovementWindow();
+    }
+
+    void DestroyMovementWindow()
+    {
+        if (activatedMovementWindow != null)
+        {
+            Destroy(activatedMovementWindow.go);
+            activatedMovementWindow = null;
+            mWfunc = WindowStage.Selecting;
+            selectingStage = SelectionStage.None;
+        }
+    }
+
+    #endregion
+
+    #region Builders
+
     MovementWindow BuildMovementWindow(Vector3 localPoint)
     {
-        MovementWindow movementWindow = new MovementWindow(wall);
-        movementWindow.go.transform.position = localPoint;
-        
-        return movementWindow;
+        MovementWindow newMovementWindow = new MovementWindow(wall);
+        newMovementWindow.go.transform.position = localPoint;
+
+        return newMovementWindow;
     }
 
     PaintLine BuildPaintLine(/*Color color, float width*/)
@@ -330,9 +382,19 @@ public class NotebookInterface : MonoBehaviour
         TextPanel newTextPanel = new TextPanel();
         //infoWall.AddTextPanel(newTextPanel);
         newTextPanel.Create(wall);
-        newTextPanel.go.transform.localPosition = new Vector3(localPoint.x, localPoint.y, localPoint.z - wall.transform.localScale.z/2);
+        newTextPanel.go.transform.localPosition = new Vector3(localPoint.x, localPoint.y, localPoint.z - wall.transform.localScale.z / 2);
         textPanels.Add(newTextPanel);
 
         return newTextPanel;
     }
+
+    #endregion
+
+
+
+
+
+
+
+
 }

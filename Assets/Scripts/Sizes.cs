@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using m = UnityEngine.Mathf;
 
-class Sizes : MonoBehaviour
+class Sizes
 {
 	public class Physics
 	{

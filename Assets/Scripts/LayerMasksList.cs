@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-public static class LayerMasksList
+static class LayerMasksList
 {
     public static LayerMask TextPanelMask
     {
