@@ -7,7 +7,8 @@ public class PaintLine
 {
     public GameObject go;
     public LineRenderer lineRenderer;
-    
+
+    private float width;
     private Vector3[] pointsVectors;
     private float[] pointsRadii;
     private float boundsRadius;
@@ -24,7 +25,12 @@ public class PaintLine
     {
         get
         {
-            return 0.3f;
+            return 0.005f;
+        }
+
+        set
+        {
+            value = width;
         }
     }
 
@@ -37,11 +43,11 @@ public class PaintLine
     {
         go = new GameObject("PaintLine(Clone)");
         go.transform.SetParent(parent.transform);
-
+        go.transform.localScale = Vector3.one;
         lineRenderer = go.AddComponent<LineRenderer>();
         lineRenderer.positionCount = 0;
         lineRenderer.startColor = lineRenderer.endColor = Color;
-        lineRenderer.startWidth = lineRenderer.endWidth = Width/(parent.transform.localScale.x * 20);
+        lineRenderer.startWidth = lineRenderer.endWidth = Width;
         lineRenderer.material = new Material(Shader.Find("UI/Default"));
         lineRenderer.material.SetFloat("_InvFade", 3);
         lineRenderer.material.SetColor("_TintColor", Color);

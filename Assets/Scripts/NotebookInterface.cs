@@ -44,7 +44,8 @@ public class NotebookInterface : MonoBehaviour
     {
         for (int i = 0; i < textPanels.Count; i++)
         {
-            textPanels[i].OnAnyChange();
+            textPanels[i].OnAnyChange(wall.transform);
+            textPanels[i].RegulatePanelSizesRelativeBoundaryPointsOfParentTransform(wall.transform);
         }
 
         isTextInputing = false;
@@ -276,6 +277,11 @@ public class NotebookInterface : MonoBehaviour
         {
             isTextInputing = false;
         }
+    }
+
+    void TryStopTyping()
+    {
+        
     }
 
     #endregion
